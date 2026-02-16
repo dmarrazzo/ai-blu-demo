@@ -1,0 +1,22 @@
+data/*.pdf
+
+# --- uv / Python Virtual Environment ---
+# Always ignore the local environment; it's recreated via uv sync
+.venv/
+
+# --- Python specific ---
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+
+# --- Environment & Secrets ---
+# Never commit your MongoDB URI or API keys!
+.env
+.env.local
+
+# --- Build & Distribution ---
+dist/
+build/
+*.egg-info/
