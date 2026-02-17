@@ -66,8 +66,16 @@ class RAGPipeline:
             else None
         )
 
+    def ensure_collection(self):
+        """Ensure the collection exists before creating indexes."""
+        db = self.client[DB_NAME]
+        if COLLECTION_NAME not in db.list_collection_names():
+            db.create_collection(COLLECTION_NAME)
+            print(f"📁 Created collection '{COLLECTION_NAME}'.")
+
     def create_indexes(self):
         """Creates the necessary Search Indexes for BM25 and Vector Search."""
+        self.ensure_collection()
         print("🛠️  Configuring Atlas Search Indexes...")
 
         indexes = [
@@ -130,6 +138,7 @@ class RAGPipeline:
             if not key.lower().endswith(".pdf"):
                 continue
 
+            t0 = time.perf_counter()
             print(f"📄 Processing S3 file: {key}...")
 
             # Download file into memory
@@ -148,6 +157,9 @@ class RAGPipeline:
             # Cleanup temp file
             if temp_path.exists():
                 temp_path.unlink()
+
+            elapsed = time.perf_counter() - t0
+            print(f"   ⏱️  {key}: {elapsed:.2f}s")
 
     def _process_and_store(self, file_path: Path, original_name: str):
         """Internal helper to convert, chunk, and save to MongoDB."""
@@ -218,6 +230,7 @@ class RAGPipeline:
         self.collection.delete_many({})
 
         for pdf in pdf_files:
+            t0 = time.perf_counter()
             print(f"📄 Processing {pdf.name} (Text-only)...")
             result = self.converter.convert(str(pdf))
             markdown_content = result.document.export_to_markdown()
@@ -237,7 +250,11 @@ class RAGPipeline:
                     for i, text in enumerate(chunks)
                 ]
                 self.collection.insert_many(payload)
-                print(f"✅ Loaded {len(payload)} chunks.")
+                elapsed = time.perf_counter() - t0
+                print(f"✅ Loaded {len(payload)} chunks in {elapsed:.2f}s.")
+            else:
+                elapsed = time.perf_counter() - t0
+                print(f"   ⏱️  {pdf.name}: {elapsed:.2f}s (no chunks)")
 
     def probe_search(self, query):
         """Demonstrates a simple Vector Search (Similarity)."""
@@ -287,13 +304,14 @@ if __name__ == "__main__":
     Path(DATA_DIR).mkdir(exist_ok=True)
 
     pipeline = RAGPipeline()
+    pipeline.create_indexes()
+
     # Decide between S3 or Local based on ENV
     if S3_BUCKET:
         pipeline.ingest_from_s3()
     else:
         pipeline.ingest_data()
 
-    pipeline.create_indexes()
 
     # Give the index a moment to initialize if it's the first run
     print("\nWaiting 5 seconds for index sync...")
