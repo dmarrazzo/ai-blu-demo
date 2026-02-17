@@ -46,7 +46,7 @@ class RAGPipeline:
             endpoint_url=S3_ENDPOINT  # <--- CRITICAL for MinIO
         ) if S3_BUCKET else None
 
-    def setup_database(self):
+    def create_indexes(self):
         """Creates the necessary Search Indexes for BM25 and Vector Search."""
         print("🛠️  Configuring Atlas Search Indexes...")
 
@@ -270,13 +270,14 @@ if __name__ == "__main__":
     Path(DATA_DIR).mkdir(exist_ok=True)
 
     pipeline = RAGPipeline()
-    pipeline.setup_database()
     # Decide between S3 or Local based on ENV
     if S3_BUCKET:
         pipeline.ingest_from_s3()
     else:
         pipeline.ingest_data()
 
+    pipeline.create_indexes()
+    
     # Give the index a moment to initialize if it's the first run
     print("\nWaiting 5 seconds for index sync...")
     time.sleep(5)
