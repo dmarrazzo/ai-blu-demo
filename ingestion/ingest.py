@@ -17,7 +17,7 @@ EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 NUM_DIMENSIONS = 384
 # The 'directConnection=true' is often helpful for local single-node Atlas containers
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/?directConnection=true")
-DB_NAME = "knowledge_base"
+DB_NAME = os.getenv("DB_NAME", "knowledge_base")
 COLLECTION_NAME = "documents"
 
 # S3 Configuration
