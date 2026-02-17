@@ -5,13 +5,10 @@ from pathlib import Path
 from typing import List
 
 import boto3
-from docling.document_converter import DocumentConverter
-from docling.document_converter import (
-    DocumentConverter,
-    PdfPipelineOptions,
-    PipelineOptions,
-)
+
+from docling.document_converter import DocumentConverter, PdfFormatOption
 from docling.datamodel.base_models import InputFormat
+from docling.datamodel.pipeline_options import PdfPipelineOptions
 
 from sentence_transformers import SentenceTransformer
 from pymongo import MongoClient
@@ -40,22 +37,21 @@ S3_ENDPOINT = os.getenv("AWS_S3_ENDPOINT")
 class RAGPipeline:
     def __init__(self):
         print(f"--- Initializing Pipeline with {EMBEDDING_MODEL} ---")
-        # 1. Configure PDF Pipeline to disable OCR
-        pipeline_options = PipelineOptions()
-        pipeline_options.pdf_common.do_ocr = False  # disables OCR
-        pipeline_options.pdf_common.do_table_structure = (
-            True  # Keep this if you want table text
-        )
 
-        # 2. Initialize the converter with these specific options
-        self.converter = DocumentConverter(
-            format_options={
-                InputFormat.PDF: PdfPipelineOptions(pipeline_options=pipeline_options)
-            }
-        )
         self.embed_model = SentenceTransformer(EMBEDDING_MODEL)
         self.client = MongoClient(MONGO_URI)
         self.collection = self.client[DB_NAME][COLLECTION_NAME]
+
+        # 1. PDF pipeline options (e.g. disable OCR for text-only PDFs)
+        pdf_options = PdfPipelineOptions(do_ocr=False)
+
+        # 2. Initialize the converter: format_options must map to FormatOption
+        #    (e.g. PdfFormatOption), not to PdfPipelineOptions directly.
+        self.converter = DocumentConverter(
+            format_options={
+                InputFormat.PDF: PdfFormatOption(pipeline_options=pdf_options)
+            }
+        )
 
         # Initialize S3 client only if bucket is provided
         self.s3_client = (
