@@ -6,6 +6,13 @@ from typing import List
 
 import boto3
 from docling.document_converter import DocumentConverter
+from docling.document_converter import (
+    DocumentConverter,
+    PdfPipelineOptions,
+    PipelineOptions,
+)
+from docling.datamodel.base_models import InputFormat
+
 from sentence_transformers import SentenceTransformer
 from pymongo import MongoClient
 from pymongo.operations import SearchIndexModel
@@ -29,22 +36,39 @@ AWS_REGION = os.getenv("AWS_DEFAULT_REGION", "us-east-1")
 # Get the endpoint from env, default to None for real AWS
 S3_ENDPOINT = os.getenv("AWS_S3_ENDPOINT")
 
+
 class RAGPipeline:
     def __init__(self):
         print(f"--- Initializing Pipeline with {EMBEDDING_MODEL} ---")
-        self.converter = DocumentConverter()
+        # 1. Configure PDF Pipeline to disable OCR
+        pipeline_options = PipelineOptions()
+        pipeline_options.pdf_common.do_ocr = False  # disables OCR
+        pipeline_options.pdf_common.do_table_structure = (
+            True  # Keep this if you want table text
+        )
+
+        # 2. Initialize the converter with these specific options
+        self.converter = DocumentConverter(
+            format_options={
+                InputFormat.PDF: PdfPipelineOptions(pipeline_options=pipeline_options)
+            }
+        )
         self.embed_model = SentenceTransformer(EMBEDDING_MODEL)
         self.client = MongoClient(MONGO_URI)
         self.collection = self.client[DB_NAME][COLLECTION_NAME]
 
         # Initialize S3 client only if bucket is provided
-        self.s3_client = boto3.client(
-            's3',
-            aws_access_key_id=AWS_ACCESS_KEY,
-            aws_secret_access_key=AWS_SECRET_KEY,
-            region_name=AWS_REGION,
-            endpoint_url=S3_ENDPOINT  # <--- CRITICAL for MinIO
-        ) if S3_BUCKET else None
+        self.s3_client = (
+            boto3.client(
+                "s3",
+                aws_access_key_id=AWS_ACCESS_KEY,
+                aws_secret_access_key=AWS_SECRET_KEY,
+                region_name=AWS_REGION,
+                endpoint_url=S3_ENDPOINT,  # <--- CRITICAL for MinIO
+            )
+            if S3_BUCKET
+            else None
+        )
 
     def create_indexes(self):
         """Creates the necessary Search Indexes for BM25 and Vector Search."""
@@ -94,37 +118,37 @@ class RAGPipeline:
             return
 
         print(f"☁️  Fetching files from s3://{S3_BUCKET}/{S3_PREFIX}...")
-        
+
         # List objects in bucket
         response = self.s3_client.list_objects_v2(Bucket=S3_BUCKET, Prefix=S3_PREFIX)
-        
-        if 'Contents' not in response:
+
+        if "Contents" not in response:
             print("⚠️ No files found in S3 bucket.")
             return
 
         # Clean existing data before fresh ingest
         self.collection.delete_many({})
 
-        for obj in response['Contents']:
-            key = obj['Key']
-            if not key.lower().endswith('.pdf'):
+        for obj in response["Contents"]:
+            key = obj["Key"]
+            if not key.lower().endswith(".pdf"):
                 continue
 
             print(f"📄 Processing S3 file: {key}...")
-            
+
             # Download file into memory
             file_stream = io.BytesIO()
             self.s3_client.download_fileobj(S3_BUCKET, key, file_stream)
             file_stream.seek(0)
-            
-            # Docling can accept bytes/streams depending on version, 
+
+            # Docling can accept bytes/streams depending on version,
             # but writing to a temp local file is most compatible
             temp_path = Path(f"temp_{Path(key).name}")
             with open(temp_path, "wb") as f:
                 f.write(file_stream.read())
 
             self._process_and_store(temp_path, key)
-            
+
             # Cleanup temp file
             if temp_path.exists():
                 temp_path.unlink()
@@ -134,20 +158,20 @@ class RAGPipeline:
         result = self.converter.convert(str(file_path))
         markdown_content = result.document.export_to_markdown()
         chunks = self.chunk_text(markdown_content)
-        
+
         if not chunks:
             return
 
         # Vectorize all chunks in one batch for speed
         embeddings = self.embed_model.encode(chunks).tolist()
-        
+
         payload = [
             {
                 "file_name": original_name,
                 "chunk_id": i,
                 "text": text,
                 "embedding": embeddings[i],
-                "ingested_at": time.time()
+                "ingested_at": time.time(),
             }
             for i, text in enumerate(chunks)
         ]
@@ -161,7 +185,7 @@ class RAGPipeline:
         """
         chunks = []
         start = 0
-        
+
         # Ensure we don't get stuck in an infinite loop if text is tiny
         if len(text) <= max_chars:
             return [text.strip()] if len(text.strip()) > 20 else []
@@ -169,8 +193,8 @@ class RAGPipeline:
         while start < len(text):
             # Define the end point of the chunk
             end = start + max_chars
-            
-            # If we aren't at the end of the string, try to snap to the 
+
+            # If we aren't at the end of the string, try to snap to the
             # nearest previous space so we don't cut a word in half.
             if end < len(text):
                 last_space = text.rfind(" ", start, end)
@@ -180,45 +204,42 @@ class RAGPipeline:
             chunk = text[start:end].strip()
             if len(chunk) > 20:
                 chunks.append(chunk)
-            
+
             # Move the start pointer back by the overlap amount
             start = end - overlap
-            
+
             # Safety check: ensure start always advances to avoid infinite loops
             if start >= end:
                 start = end + 1
-                
+
         return chunks
 
     def ingest_data(self):
-        """Parses all PDFs in the data directory and loads them into Mongo."""
         pdf_files = list(Path(DATA_DIR).glob("*.pdf"))
         if not pdf_files:
-            print(f"❌ No PDFs found in ./{DATA_DIR}")
             return
 
-        # delete old data
         self.collection.delete_many({})
 
         for pdf in pdf_files:
-            print(f"📄 Processing {pdf.name}...")
+            print(f"📄 Processing {pdf.name} (Text-only)...")
             result = self.converter.convert(str(pdf))
             markdown_content = result.document.export_to_markdown()
 
             chunks = self.chunk_text(markdown_content, max_chars=800, overlap=150)
-            
-            payload = []
-            for i, text in enumerate(chunks):
-                payload.append(
+
+            if chunks:
+                # Batch encode for massive speedup
+                embeddings = self.embed_model.encode(chunks).tolist()
+                payload = [
                     {
                         "file_name": pdf.name,
                         "chunk_id": i,
                         "text": text,
-                        "embedding": self.embed_model.encode(text).tolist(),
+                        "embedding": embeddings[i],
                     }
-                )
-
-            if payload:
+                    for i, text in enumerate(chunks)
+                ]
                 self.collection.insert_many(payload)
                 print(f"✅ Loaded {len(payload)} chunks.")
 
