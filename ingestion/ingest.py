@@ -1,6 +1,10 @@
 import os
-from pathlib import Path
 import time
+import io
+from pathlib import Path
+from typing import List
+
+import boto3
 from docling.document_converter import DocumentConverter
 from sentence_transformers import SentenceTransformer
 from pymongo import MongoClient
@@ -16,6 +20,14 @@ MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/?directConnection=
 DB_NAME = "knowledge_base"
 COLLECTION_NAME = "documents"
 
+# S3 Configuration
+S3_BUCKET = os.getenv("S3_BUCKET")
+S3_PREFIX = os.getenv("S3_PREFIX", "")  # e.g., "uploads/"
+AWS_ACCESS_KEY = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
+# Get the endpoint from env, default to None for real AWS
+S3_ENDPOINT = os.getenv("S3_ENDPOINT_URL")
 
 class RAGPipeline:
     def __init__(self):
@@ -24,6 +36,15 @@ class RAGPipeline:
         self.embed_model = SentenceTransformer(EMBEDDING_MODEL)
         self.client = MongoClient(MONGO_URI)
         self.collection = self.client[DB_NAME][COLLECTION_NAME]
+
+        # Initialize S3 client only if bucket is provided
+        self.s3_client = boto3.client(
+            's3',
+            aws_access_key_id=AWS_ACCESS_KEY,
+            aws_secret_access_key=AWS_SECRET_KEY,
+            region_name=AWS_REGION,
+            endpoint_url=S3_ENDPOINT  # <--- CRITICAL for MinIO
+        ) if S3_BUCKET else None
 
     def setup_database(self):
         """Creates the necessary Search Indexes for BM25 and Vector Search."""
@@ -65,6 +86,74 @@ class RAGPipeline:
             print("⏳ Indexes requested. They will build in the background.")
         except Exception as e:
             print(f"⚠️ Index setup note: {e}")
+
+    def ingest_from_s3(self):
+        """Downloads PDFs from S3 and processes them."""
+        if not self.s3_client or not S3_BUCKET:
+            print("❌ S3 Bucket not configured. Skipping S3 ingestion.")
+            return
+
+        print(f"☁️  Fetching files from s3://{S3_BUCKET}/{S3_PREFIX}...")
+        
+        # List objects in bucket
+        response = self.s3_client.list_objects_v2(Bucket=S3_BUCKET, Prefix=S3_PREFIX)
+        
+        if 'Contents' not in response:
+            print("⚠️ No files found in S3 bucket.")
+            return
+
+        # Clean existing data before fresh ingest
+        self.collection.delete_many({})
+
+        for obj in response['Contents']:
+            key = obj['Key']
+            if not key.lower().endswith('.pdf'):
+                continue
+
+            print(f"📄 Processing S3 file: {key}...")
+            
+            # Download file into memory
+            file_stream = io.BytesIO()
+            self.s3_client.download_fileobj(S3_BUCKET, key, file_stream)
+            file_stream.seek(0)
+            
+            # Docling can accept bytes/streams depending on version, 
+            # but writing to a temp local file is most compatible
+            temp_path = Path(f"temp_{Path(key).name}")
+            with open(temp_path, "wb") as f:
+                f.write(file_stream.read())
+
+            self._process_and_store(temp_path, key)
+            
+            # Cleanup temp file
+            if temp_path.exists():
+                temp_path.unlink()
+
+    def _process_and_store(self, file_path: Path, original_name: str):
+        """Internal helper to convert, chunk, and save to MongoDB."""
+        result = self.converter.convert(str(file_path))
+        markdown_content = result.document.export_to_markdown()
+        chunks = self.chunk_text(markdown_content)
+        
+        if not chunks:
+            return
+
+        # Vectorize all chunks in one batch for speed
+        embeddings = self.embed_model.encode(chunks).tolist()
+        
+        payload = [
+            {
+                "file_name": original_name,
+                "chunk_id": i,
+                "text": text,
+                "embedding": embeddings[i],
+                "ingested_at": time.time()
+            }
+            for i, text in enumerate(chunks)
+        ]
+
+        self.collection.insert_many(payload)
+        print(f"✅ Loaded {len(payload)} chunks from {original_name}.")
 
     def chunk_text(self, text, max_chars=800, overlap=100):
         """
@@ -182,7 +271,11 @@ if __name__ == "__main__":
 
     pipeline = RAGPipeline()
     pipeline.setup_database()
-    pipeline.ingest_data()
+    # Decide between S3 or Local based on ENV
+    if S3_BUCKET:
+        pipeline.ingest_from_s3()
+    else:
+        pipeline.ingest_data()
 
     # Give the index a moment to initialize if it's the first run
     print("\nWaiting 5 seconds for index sync...")

@@ -1,4 +1,4 @@
-data/*.pdf
+data/*
 
 # --- uv / Python Virtual Environment ---
 # Always ignore the local environment; it's recreated via uv sync
