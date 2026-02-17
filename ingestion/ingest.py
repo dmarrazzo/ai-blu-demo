@@ -21,13 +21,13 @@ DB_NAME = os.getenv("DB_NAME", "knowledge_base")
 COLLECTION_NAME = "documents"
 
 # S3 Configuration
-S3_BUCKET = os.getenv("S3_BUCKET")
+S3_BUCKET = os.getenv("AWS_S3_BUCKET")
 S3_PREFIX = os.getenv("S3_PREFIX", "")  # e.g., "uploads/"
 AWS_ACCESS_KEY = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
-AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
+AWS_REGION = os.getenv("AWS_DEFAULT_REGION", "us-east-1")
 # Get the endpoint from env, default to None for real AWS
-S3_ENDPOINT = os.getenv("S3_ENDPOINT_URL")
+S3_ENDPOINT = os.getenv("AWS_S3_ENDPOINT")
 
 class RAGPipeline:
     def __init__(self):
@@ -277,7 +277,7 @@ if __name__ == "__main__":
         pipeline.ingest_data()
 
     pipeline.create_indexes()
-    
+
     # Give the index a moment to initialize if it's the first run
     print("\nWaiting 5 seconds for index sync...")
     time.sleep(5)
