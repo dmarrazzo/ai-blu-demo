@@ -1,7 +1,12 @@
-# local ingestion dir
+# local ingestion dir, temporary data
 data/*
 tmp
+
+# secret information
 secrets.md
+
+# hidden dir
+.*
 
 # --- uv / Python Virtual Environment ---
 # Always ignore the local environment; it's recreated via uv sync
