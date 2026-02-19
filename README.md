@@ -31,10 +31,10 @@ podman exec -it minio-local bin/sh -c "\
 ## Ingestion
 
 ```sh
-export S3_BUCKET=knowledge-base
+export AWS_S3_BUCKET=knowledge-base
 export AWS_ACCESS_KEY_ID=minioadmin
 export AWS_SECRET_ACCESS_KEY=minioadmin
-export S3_ENDPOINT_URL=http://localhost:9000
+export AWS_S3_ENDPOINT=http://localhost:9000
 export AWS_REGION=us-east-1
 
 uv run ingestion/ingest.py
