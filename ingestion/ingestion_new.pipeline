@@ -18,31 +18,36 @@
               "include_subdirectories": false,
               "outputs": [],
               "env_vars": [
-                {
-                  "env_var": "AWS_S3_BUCKET"
-                },
-                {
-                  "env_var": "S3_PREFIX"
-                },
-                {
-                  "env_var": "AWS_S3_ENDPOINT"
-                },
-                {
-                  "env_var": "PVC_MOUNT"
-                },
-                {
-                  "env_var": "AWS_ACCESS_KEY_ID"
-                },
-                {
-                  "env_var": "AWS_SECRET_ACCESS_KEY"
-                },
-                {
-                  "env_var": "AWS_DEFAULT_REGION"
-                }
               ],
               "kubernetes_pod_annotations": [],
               "kubernetes_pod_labels": [],
-              "kubernetes_secrets": [],
+              "kubernetes_secrets": [
+                {
+                  "env_var": "MONGO_URI",
+                  "name": "ingest-secret",
+                  "key": "MONGO_URI"
+                },
+                {
+                  "env_var": "DB_NAME",
+                  "name": "ingest-secret",
+                  "key": "DB_NAME"
+                },
+                {
+                  "env_var": "AWS_S3_BUCKET",
+                  "name": "ingest-secret",
+                  "key": "AWS_S3_BUCKET"
+                },
+                {
+                  "env_var": "AWS_DEFAULT_REGION",
+                  "name": "ingest-secret",
+                  "key": "AWS_DEFAULT_REGION"
+                },
+                {
+                  "env_var": "AWS_S3_ENDPOINT",
+                  "name": "ingest-secret",
+                  "key": "AWS_S3_ENDPOINT"
+                }
+              ],
               "kubernetes_shared_mem_size": {},
               "kubernetes_tolerations": [],
               "mounted_volumes": [
@@ -111,7 +116,28 @@
               "kubernetes_secrets": [],
               "kubernetes_shared_mem_size": {},
               "kubernetes_tolerations": [],
-              "mounted_volumes": [],
+              "mounted_volumes": [
+                {
+                  "path": "/mnt/data",
+                  "pvc_name": "ingestion-pvc",
+                  "read_only": false
+                }
+                {
+                  "path": "/mnt/data",
+                  "pvc_name": "ingestion-pvc",
+                  "read_only": false
+                }
+                {
+                  "path": "/mnt/data",
+                  "pvc_name": "ingestion-pvc",
+                  "read_only": false
+                }
+                {
+                  "path": "/mnt/data",
+                  "pvc_name": "ingestion-pvc",
+                  "read_only": false
+                }
+              ],
               "filename": "chunking.py",
               "runtime_image": "image-registry.openshift-image-registry.svc:5000/blu/ingest-runtime:latest"
             },
@@ -178,7 +204,13 @@
               "kubernetes_secrets": [],
               "kubernetes_shared_mem_size": {},
               "kubernetes_tolerations": [],
-              "mounted_volumes": [],
+              "mounted_volumes": [
+                {
+                  "path": "/mnt/data",
+                  "pvc_name": "ingestion-pvc",
+                  "read_only": false
+                }
+              ],
               "filename": "embeddings.py",
               "runtime_image": "image-registry.openshift-image-registry.svc:5000/blu/ingest-runtime:latest"
             },
@@ -248,7 +280,13 @@
               "kubernetes_secrets": [],
               "kubernetes_shared_mem_size": {},
               "kubernetes_tolerations": [],
-              "mounted_volumes": [],
+              "mounted_volumes": [
+                {
+                  "path": "/mnt/data",
+                  "pvc_name": "ingestion-pvc",
+                  "read_only": false
+                }
+              ],
               "runtime_image": "image-registry.openshift-image-registry.svc:5000/blu/ingest-runtime:latest",
               "filename": "ingestion.py"
             },
@@ -308,7 +346,13 @@
           "runtime": "Pipelines",
           "pipeline_defaults": {
             "kubernetes_pod_labels": [],
-            "mounted_volumes": [],
+            "mounted_volumes": [
+                {
+                  "path": "/mnt/data",
+                  "pvc_name": "ingestion-pvc",
+                  "read_only": false
+                }
+            ],
             "kubernetes_shared_mem_size": {},
             "kubernetes_pod_annotations": [],
             "kubernetes_tolerations": [],
