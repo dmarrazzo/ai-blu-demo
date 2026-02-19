@@ -39,3 +39,22 @@ export AWS_REGION=us-east-1
 
 uv run ingestion/ingest.py
 ```
+
+## Build pipeline image
+
+Local build:
+
+```sh
+podman build -t odh-pipeline-runtime-datascience-cpu-py312-rhel9-blu:v1.0 -f k8s/Containerfile .
+```
+
+OpenShift build:
+
+```sh
+mkdir tmp 2>/dev/null
+cp pyproject.toml uv.lock tmp
+cp k8s/Containerfile tmp/Dockerfile
+oc new-build --name=odh-pipeline-runtime-datascience-cpu-py312-rhel9-blu --to=odh-pipeline-runtime-datascience-cpu-py312-rhel9-blu:v1.0
+oc start-build odh-pipeline-runtime-datascience-cpu-py312-rhel9-blu --from-dir=tmp --follow
+rm -rf tmp
+```

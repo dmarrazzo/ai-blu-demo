@@ -1,0 +1,4 @@
+FROM registry.redhat.io/rhoai/odh-pipeline-runtime-datascience-cpu-py312-rhel9:v3.2
+# RUN pip install docling sentence_transformers pymongo boto3
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-dev

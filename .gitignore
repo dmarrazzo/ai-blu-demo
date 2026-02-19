@@ -1,4 +1,7 @@
+# local ingestion dir
 data/*
+tmp
+secrets.md
 
 # --- uv / Python Virtual Environment ---
 # Always ignore the local environment; it's recreated via uv sync
