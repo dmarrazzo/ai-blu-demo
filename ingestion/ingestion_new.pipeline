@@ -122,21 +122,6 @@
                   "pvc_name": "ingestion-pvc",
                   "read_only": false
                 }
-                {
-                  "path": "/mnt/data",
-                  "pvc_name": "ingestion-pvc",
-                  "read_only": false
-                }
-                {
-                  "path": "/mnt/data",
-                  "pvc_name": "ingestion-pvc",
-                  "read_only": false
-                }
-                {
-                  "path": "/mnt/data",
-                  "pvc_name": "ingestion-pvc",
-                  "read_only": false
-                }
               ],
               "filename": "chunking.py",
               "runtime_image": "image-registry.openshift-image-registry.svc:5000/blu/ingest-runtime:latest"
