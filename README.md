@@ -1,6 +1,8 @@
 # Data Ingestion Sample
 
-## Local mongodb
+## Local test environment
+
+Mongodb
 
 ```sh
 podman run -d \
@@ -9,7 +11,7 @@ podman run -d \
   mongodb/mongodb-atlas-local:latest
 ```
 
-## Local minio
+Minio
 
 ```sh
 podman run -d \
@@ -22,13 +24,16 @@ podman run -d \
   quay.io/minio/minio server /data --console-address ":9001"
 ```
 
+Create the bucket and upload files:
+
 ```sh
 podman exec -it minio-local bin/sh -c "\
   mc alias set local_minio http://localhost:9000 minioadmin minioadmin && \
   mc mb local_minio/knowledge-base && \
   mc cp /data/*.pdf local_minio/knowledge-base/"
 ```
-## Ingestion
+
+Run Ingestion:
 
 ```sh
 export AWS_S3_BUCKET=knowledge-base
@@ -37,10 +42,15 @@ export AWS_SECRET_ACCESS_KEY=minioadmin
 export AWS_S3_ENDPOINT=http://localhost:9000
 export AWS_REGION=us-east-1
 
-uv run ingestion/ingest.py
+uv run ingestion/s3_download.py
+uv run ingestion/chunking.py
+uv run ingestion/embedding.py
+uv run ingestion/ingestion.py
 ```
 
-## Build pipeline image
+## Configure OpenShift Environement
+
+### Build pipeline image
 
 Local build:
 
@@ -57,4 +67,23 @@ cp k8s/Containerfile tmp/Dockerfile
 oc new-build --name=odh-pipeline-runtime-datascience-cpu-py312-rhel9-blu --to=odh-pipeline-runtime-datascience-cpu-py312-rhel9-blu:v1.0
 oc start-build odh-pipeline-runtime-datascience-cpu-py312-rhel9-blu --from-dir=tmp --follow
 rm -rf tmp
+```
+
+Make sure that following environment variable are defined in `ingestion/.env`:
+
+```sh
+MONGO_URI
+DB_NAME
+AWS_S3_BUCKET
+AWS_ACCESS_KEY
+AWS_SECRET_ACCESS_KEY
+AWS_DEFAULT_REGION
+AWS_S3_ENDPOINT
+```
+
+Create configmap and secret:
+
+```sh
+oc apply -f 
+oc create secret generic ingest-secret --from-env-file=ingestion/.env
 ```
