@@ -17,8 +17,7 @@
               "dependencies": [],
               "include_subdirectories": false,
               "outputs": [],
-              "env_vars": [
-              ],
+              "env_vars": [],
               "kubernetes_pod_annotations": [],
               "kubernetes_pod_labels": [],
               "kubernetes_secrets": [
@@ -58,7 +57,7 @@
                 }
               ],
               "filename": "s3_download.py",
-              "runtime_image": "image-registry.openshift-image-registry.svc:5000/blu/ingest-runtime:latest"
+              "runtime_image": "image-registry.openshift-image-registry.svc:5000/blu/odh-pipeline-runtime-datascience-cpu-py312-rhel9-blu"
             },
             "ui_data": {
               "label": "s3_download.py",
@@ -124,7 +123,7 @@
                 }
               ],
               "filename": "chunking.py",
-              "runtime_image": "image-registry.openshift-image-registry.svc:5000/blu/ingest-runtime:latest"
+              "runtime_image": "image-registry.openshift-image-registry.svc:5000/blu/odh-pipeline-runtime-datascience-cpu-py312-rhel9-blu"
             },
             "ui_data": {
               "label": "chunking.py",
@@ -197,7 +196,7 @@
                 }
               ],
               "filename": "embeddings.py",
-              "runtime_image": "image-registry.openshift-image-registry.svc:5000/blu/ingest-runtime:latest"
+              "runtime_image": "image-registry.openshift-image-registry.svc:5000/blu/odh-pipeline-runtime-datascience-cpu-py312-rhel9-blu"
             },
             "ui_data": {
               "label": "embeddings.py",
@@ -272,7 +271,7 @@
                   "read_only": false
                 }
               ],
-              "runtime_image": "image-registry.openshift-image-registry.svc:5000/blu/ingest-runtime:latest",
+              "runtime_image": "image-registry.openshift-image-registry.svc:5000/blu/odh-pipeline-runtime-datascience-cpu-py312-rhel9-blu",
               "filename": "ingestion.py"
             },
             "ui_data": {
@@ -332,18 +331,20 @@
           "pipeline_defaults": {
             "kubernetes_pod_labels": [],
             "mounted_volumes": [
-                {
-                  "path": "/mnt/data",
-                  "pvc_name": "ingestion-pvc",
-                  "read_only": false
-                }
+              {
+                "path": "/mnt/data",
+                "pvc_name": "ingestion-pvc",
+                "read_only": false
+              }
             ],
             "kubernetes_shared_mem_size": {},
             "kubernetes_pod_annotations": [],
             "kubernetes_tolerations": [],
             "kubernetes_secrets": [],
-            "env_vars": []
-          }
+            "env_vars": [],
+            "runtime_image": "image-registry.openshift-image-registry.svc:5000/blu/odh-pipeline-runtime-datascience-cpu-py312-rhel9-blu"
+          },
+          "pipeline_parameters": []
         }
       },
       "runtime_ref": ""
