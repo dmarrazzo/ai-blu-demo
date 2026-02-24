@@ -22,11 +22,6 @@
               "kubernetes_pod_labels": [],
               "kubernetes_secrets": [
                 {
-                  "env_var": "MONGO_URI",
-                  "name": "ingest-secret",
-                  "key": "MONGO_URI"
-                },
-                {
                   "env_var": "DB_NAME",
                   "name": "ingest-secret",
                   "key": "DB_NAME"
@@ -250,15 +245,18 @@
               "outputs": [],
               "env_vars": [
                 {
-                  "env_var": "MONGO_URI"
-                },
-                {
                   "env_var": "PVC_MOUNT"
                 }
               ],
               "kubernetes_pod_annotations": [],
               "kubernetes_pod_labels": [],
-              "kubernetes_secrets": [],
+              "kubernetes_secrets": [
+                {
+                  "env_var": "MONGO_URI",
+                  "name": "ingest-secret",
+                  "key": "MONGO_URI"
+                }
+              ],
               "kubernetes_shared_mem_size": {},
               "kubernetes_tolerations": [],
               "mounted_volumes": [
