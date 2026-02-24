@@ -44,7 +44,7 @@ export AWS_REGION=us-east-1
 
 uv run ingestion/s3_download.py
 uv run ingestion/chunking.py
-uv run ingestion/embedding.py
+uv run ingestion/embeddings.py
 uv run ingestion/ingestion.py
 ```
 
@@ -64,7 +64,8 @@ OpenShift build:
 mkdir tmp 2>/dev/null
 cp pyproject.toml uv.lock tmp
 cp k8s/Containerfile tmp/Dockerfile
-oc new-build --name=odh-pipeline-runtime-datascience-cpu-py312-rhel9-blu --to=odh-pipeline-runtime-datascience-cpu-py312-rhel9-blu:v1.0
+oc delete buildconfigs odh-pipeline-runtime-datascience-cpu-py312-rhel9-blu
+oc new-build --name=odh-pipeline-runtime-datascience-cpu-py312-rhel9-blu --to=odh-pipeline-runtime-datascience-cpu-py312-rhel9-blu:v1.1 --binary --strategy=docker
 oc start-build odh-pipeline-runtime-datascience-cpu-py312-rhel9-blu --from-dir=tmp --follow
 rm -rf tmp
 ```

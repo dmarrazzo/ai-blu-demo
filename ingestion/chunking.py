@@ -25,6 +25,11 @@ def chunk_text(text, max_chars=800, overlap=150):
     return chunks
 
 def run_conversion(input_folder: str):
+    staging_dir = PVC_MOUNT / "staging"
+
+    # Create the directory if it doesn't exist
+    staging_dir.mkdir(parents=True, exist_ok=True)
+
     pdf_options = PdfPipelineOptions(do_ocr=False)
     converter = DocumentConverter(
         format_options={InputFormat.PDF: PdfFormatOption(pipeline_options=pdf_options)}
@@ -36,9 +41,9 @@ def run_conversion(input_folder: str):
         result = converter.convert(str(pdf))
         markdown_content = result.document.export_to_markdown()
         chunks = chunk_text(markdown_content)
-        
+
         # Save chunks to a JSON file on the PVC for Stage 2
-        output_file = PVC_MOUNT / "staging" / f"{pdf.stem}_chunks.json"
+        output_file = staging_dir / f"{pdf.stem}_chunks.json"
         with open(output_file, "w") as f:
             json.dump({"file_name": pdf.name, "chunks": chunks}, f)
         print(f"✅ Saved {len(chunks)} chunks to {output_file}")
