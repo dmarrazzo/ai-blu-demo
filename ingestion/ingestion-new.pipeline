@@ -56,14 +56,13 @@
                   "read_only": false
                 }
               ],
-              "filename": "s3_download.py",
-              "runtime_image": "image-registry.openshift-image-registry.svc:5000/blu/odh-pipeline-runtime-datascience-cpu-py312-rhel9-blu"
+              "filename": "s3_download.py"
             },
             "ui_data": {
               "label": "s3_download.py",
               "image": "/notebook/blu/jupy/static/elyra/python.svg",
-              "x_pos": 152,
-              "y_pos": 223,
+              "x_pos": 24,
+              "y_pos": 54,
               "description": "Run Python script"
             }
           },
@@ -122,14 +121,13 @@
                   "read_only": false
                 }
               ],
-              "filename": "chunking.py",
-              "runtime_image": "image-registry.openshift-image-registry.svc:5000/blu/odh-pipeline-runtime-datascience-cpu-py312-rhel9-blu"
+              "filename": "chunking.py"
             },
             "ui_data": {
               "label": "chunking.py",
               "image": "/notebook/blu/jupy/static/elyra/python.svg",
-              "x_pos": 415,
-              "y_pos": 265,
+              "x_pos": 323,
+              "y_pos": 128,
               "description": "Run Python script"
             }
           },
@@ -195,14 +193,13 @@
                   "read_only": false
                 }
               ],
-              "filename": "embeddings.py",
-              "runtime_image": "image-registry.openshift-image-registry.svc:5000/blu/odh-pipeline-runtime-datascience-cpu-py312-rhel9-blu"
+              "filename": "embeddings.py"
             },
             "ui_data": {
               "label": "embeddings.py",
               "image": "/notebook/blu/jupy/static/elyra/python.svg",
-              "x_pos": 681,
-              "y_pos": 316,
+              "x_pos": 588,
+              "y_pos": 196,
               "description": "Run Python script"
             }
           },
@@ -271,14 +268,13 @@
                   "read_only": false
                 }
               ],
-              "runtime_image": "image-registry.openshift-image-registry.svc:5000/blu/odh-pipeline-runtime-datascience-cpu-py312-rhel9-blu",
               "filename": "ingestion.py"
             },
             "ui_data": {
               "label": "ingestion.py",
               "image": "/notebook/blu/jupy/static/elyra/python.svg",
-              "x_pos": 955,
-              "y_pos": 348,
+              "x_pos": 836,
+              "y_pos": 249,
               "description": "Run Python script"
             }
           },
@@ -326,7 +322,7 @@
         "version": 8,
         "runtime_type": "KUBEFLOW_PIPELINES",
         "properties": {
-          "name": "ingestion_new",
+          "name": "ingestion-new",
           "runtime": "Pipelines",
           "pipeline_defaults": {
             "kubernetes_pod_labels": [],
@@ -342,7 +338,7 @@
             "kubernetes_tolerations": [],
             "kubernetes_secrets": [],
             "env_vars": [],
-            "runtime_image": "image-registry.openshift-image-registry.svc:5000/blu/odh-pipeline-runtime-datascience-cpu-py312-rhel9-blu"
+            "runtime_image": "image-registry.openshift-image-registry.svc:5000/blu/odh-pipeline-runtime-datascience-cpu-py312-rhel9-blu:v1.0"
           },
           "pipeline_parameters": []
         }
