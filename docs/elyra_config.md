@@ -12,5 +12,5 @@ Inside Jupiter editor:
 
     - In **Image Name** field enter the image URL in the local registry: `image-registry.openshift-image-registry.svc:5000/blu/odh-pipeline-runtime-datascience-cpu-py312-rhel9-blu:v1.0`
 
-      > [!TIP]
-      > Use the following command to list image URL and tags: `oc get is`
+> [!TIP]
+> Use the following command to list image URL and tags: `oc get is`
