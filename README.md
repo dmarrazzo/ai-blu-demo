@@ -88,3 +88,5 @@ Create configmap and secret:
 oc apply -f 
 oc create secret generic ingest-secret --from-env-file=ingestion/.env
 ```
+
+[Add Elyra configuration for deployment](/docs/elyra_config.md)
