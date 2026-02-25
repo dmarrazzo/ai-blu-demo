@@ -48,7 +48,7 @@ uv run ingestion/embeddings.py
 uv run ingestion/ingestion.py
 ```
 
-## Configure OpenShift Environement
+## Configure OpenShift Environment
 
 ### Build pipeline image
 
