@@ -3,6 +3,10 @@ kind: LlamaStackDistribution
 metadata:
   name: llamastack-custom-distribution
 spec:
+  network:
+    allowedFrom:
+      namespaces:
+        - '$NAMESPACE'
   replicas: 1
   server:
     distribution:
