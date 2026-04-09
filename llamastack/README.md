@@ -18,3 +18,5 @@ CR Deployment:
 set -x NAMESPACE <namespace>
 cat llamastack/llama-stack-dist.yaml | envsubst | oc create -f -
 ```
+
+It is worth noting the network section in the CR which controls access policies to the service.
