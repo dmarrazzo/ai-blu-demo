@@ -1,0 +1,39 @@
+apiVersion: llamastack.io/v1alpha1
+kind: LlamaStackDistribution
+metadata:
+  name: llamastack-custom-distribution
+spec:
+  replicas: 1
+  server:
+    distribution:
+      name: 'rh-dev'
+    containerSpec:
+      name: llama-stack
+      port: 8321
+      env:
+        - name: VLLM_URL
+          value: 'http://redhataillama-31-8b-instruct-predictor.$NAMESPACE.svc.cluster.local:8080/v1'
+        - name: INFERENCE_MODEL
+          value: redhataillama-31-8b-instruct
+        # - name: INFERENCE_TYPE
+        #   value: 'remote::vllm'
+        - name: VLLM_TLS_VERIFY
+          value: 'false'
+        - name: POSTGRES_HOST
+          value: pgsql
+        - name: POSTGRES_PORT
+          value: '5432'
+        - name: POSTGRES_DB
+          value: db
+        - name: POSTGRES_USER
+          value: pguser
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: POSTGRESQL_PASSWORD
+              name: pg-secret
+    userConfig:
+      configMapName: llama-stack-local
+    storage:
+      size: 20Gi
+      mountPath: /opt/app-root/src/.llama/distributions/rh/
