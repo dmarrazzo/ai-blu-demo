@@ -7,6 +7,10 @@ requires-python = ">=3.12"
 dependencies = [
     "boto3>=1.42.50",
     "docling>=2.73.1",
+    "kfp>=2.16.0",
+    "numpy>=2.4.2",
+    "openai>=2.32.0",
     "pymongo>=4.16.0",
+    "python-dotenv>=1.2.1",
     "sentence-transformers>=5.2.2",
 ]
