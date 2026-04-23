@@ -1,0 +1,18 @@
+# Use the official RHEL 10 PostgreSQL 16 image
+FROM registry.redhat.io/rhel10/postgresql-16:10.1
+
+USER 0
+
+RUN echo -e "[centos-appstream]\n\
+name=CentOS Stream 10 - AppStream\n\
+baseurl=http://mirror.stream.centos.org/10-stream/AppStream/\$basearch/os/\n\
+gpgcheck=0\n\
+enabled=1" > /etc/yum.repos.d/centos.repo
+
+# Install the pgvector RPM directly from the RHEL AppStream
+# We use -y to assume 'yes' and --nodocs to keep the image slim
+RUN dnf install -y --nodocs postgresql16-pgvector && \
+    dnf clean all
+
+# Revert to the default PostgreSQL user (UID 26)
+USER 26

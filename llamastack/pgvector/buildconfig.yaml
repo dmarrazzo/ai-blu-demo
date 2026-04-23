@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: List
+items:
+- apiVersion: image.openshift.io/v1
+  kind: ImageStream
+  metadata:
+    name: postgresql-pgvector
+- apiVersion: build.openshift.io/v1
+  kind: BuildConfig
+  metadata:
+    name: postgresql-pgvector-build
+  spec:
+    source:
+      dockerfile: |
+        FROM registry.redhat.io/rhel10/postgresql-16:10.1
+        USER 0
+        RUN dnf install -y --nodocs postgresql16-pgvector && \
+            dnf clean all
+        USER 26
+      type: Dockerfile
+    strategy:
+      dockerStrategy:
+        from:
+          kind: DockerImage
+          name: registry.redhat.io/rhel10/postgresql-16:10.1
+      type: Docker
+    output:
+      to:
+        kind: ImageStreamTag
+        name: postgresql-pgvector:latest
